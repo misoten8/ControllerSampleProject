@@ -55,6 +55,8 @@ public class WiiTest : MonoBehaviour
 		WmModel.minus.enabled = Wm.Button.minus;
 		WmModel.home.enabled = Wm.Button.home;
 
+		Debug.Log(GetAccelVector());
+
 		// Wiiリモコンプラスでなければモデルは回転しない
 		if (Wm.current_ext != ExtensionController.MOTIONPLUS)
 		{
@@ -120,10 +122,52 @@ public class WiiTest : MonoBehaviour
 			Wm = null;
 		}
 
+		// 接続されていなかったらこれ以降を表示しない
 		if (Wm == null)
 		{
 			return;
 		}
+
+		// 外部コントローラー確認
+		GUILayout.Label("Extension: " + Wm.current_ext.ToString());
+
+		// LEDチェック
+		GUILayout.BeginHorizontal();
+		for (int i = 0; i < 4; i++)
+		{
+			if (GUILayout.Button("" + i, GUILayout.Width(300 / 4)))
+				Wm.SendPlayerLED(i == 0, i == 1, i == 2, i == 3);
+		}
+		if (GUILayout.Button("LED Reset", GUILayout.Width(300 / 4)))
+		{
+			Wm.SendPlayerLED(false,false,false,false);
+		}
+		GUILayout.EndHorizontal();
+
+		// 振動
+		GUILayout.Label("振動");
+		if (GUILayout.Button("ON"))
+		{
+			Wm.RumbleOn = true;
+			Wm.SendStatusInfoRequest();
+		}
+		if (GUILayout.Button("OFF"))
+		{
+			Wm.RumbleOn = false;
+			Wm.SendStatusInfoRequest();
+		}
+
+		// 加速度
+		GUILayout.BeginHorizontal();
+		if (GUILayout.Button("But/Acc", GUILayout.Width(300 / 4)))
+			Wm.SendDataReportMode(InputDataType.REPORT_BUTTONS_ACCEL);
+		if (GUILayout.Button("But/Ext8", GUILayout.Width(300 / 4)))
+			Wm.SendDataReportMode(InputDataType.REPORT_BUTTONS_EXT8);
+		if (GUILayout.Button("B/A/Ext16", GUILayout.Width(300 / 4)))
+			Wm.SendDataReportMode(InputDataType.REPORT_BUTTONS_ACCEL_EXT16);
+		if (GUILayout.Button("Ext21", GUILayout.Width(300 / 4)))
+			Wm.SendDataReportMode(InputDataType.REPORT_EXT21);
+		GUILayout.EndHorizontal();
 	}
 
 	private Vector3 GetAccelVector()
