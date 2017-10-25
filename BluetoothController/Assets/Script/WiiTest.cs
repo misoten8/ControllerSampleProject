@@ -1,8 +1,12 @@
 ﻿using UnityEngine;
+using System;
 using UnityEngine.UI;
 using System.Collections;
 using System.Text;
 using WiimoteApi;
+using WiimoteApi.Internal;
+using WiimoteApi.Util;
+using System.IO;
 
 
 public class WiiTest : MonoBehaviour
@@ -10,12 +14,16 @@ public class WiiTest : MonoBehaviour
 	public WiimoteModel wmModel;				// モデル
 	private Wiimote wm;							// wiiリモコンハンドル
 	private Quaternion initialRotation;			// 角度初期値
-	private Vector3 wmpOffset = Vector3.zero;	// ジャイロオフセット
+	private Vector3 wmpOffset = Vector3.zero;   // ジャイロオフセット
+	private bool wmSwing;                       // 振っているかどうか
+	private Vector3 wmAccel = Vector3.zero;
+	private Vector3 wmAccelOld = Vector3.zero;
 
 	// 初期化処理
 	void Start()
 	{
 		initialRotation = wmModel.rot.localRotation;
+		wmSwing = false;
 	}
 
 	// 更新処理
@@ -56,15 +64,21 @@ public class WiiTest : MonoBehaviour
 		wmModel.minus.enabled = wm.Button.minus;
 		wmModel.home.enabled = wm.Button.home;
 
+		// 加速度取得
+		Debug.Log(wmAccel =GetAccelVector());
 
-		Debug.Log(GetAccelVector());
-
+		// 振っているか判定
+		wmSwing = SwingCheck();
 
 		// Wiiリモコンプラスでなければモデルは回転しない
 		if (wm.current_ext != ExtensionController.MOTIONPLUS)
 		{
 			wmModel.rot.localRotation = initialRotation;
 		}
+
+		// モーションプラスがアクティブになっていければ終了
+		if (!wm.wmp_attached) { return; }
+
 	}
 
 	// デバッグ
@@ -80,6 +94,7 @@ public class WiiTest : MonoBehaviour
 		if (GUILayout.Button("Find Wiimote"))
 		{
 			WiimoteManager.FindWiimotes();
+			//wm = InitMotionPlus(WiimoteManager.Wiimotes[0]);
 		}
 
 		// 切断ボタン
@@ -157,8 +172,15 @@ public class WiiTest : MonoBehaviour
 				wm.Accel.CalibrateAccel(step);
 		}
 		GUILayout.EndHorizontal();
+
+		// スピーカー
+		if (GUILayout.Button("Speaker" , GUILayout.Width(300 / 4)))
+		{
+			SpeakerInit();
+		}
 	}
 
+	// 加速度の取得
 	private Vector3 GetAccelVector()
 	{
 		float accel_x;
@@ -190,12 +212,80 @@ public class WiiTest : MonoBehaviour
 		public Renderer home;
 	}
 
-	// 振動関数
-	public bool Swing()
+	// 振動判定関数
+	public bool SwingCheck()
 	{
+		float ac;
 		bool swing = false;
 
+		Vector3 accel = GetAccelVector();
 
+		if (accel == wmAccelOld)
+		{
+			return swing;
+		}
+
+		
+		ac = Math.Abs(accel.x) + Math.Abs(accel.y) + Math.Abs(accel.z);
+		Debug.Log("加速度:" + ac);
+		if (ac < 1.44f)
+		{
+			Debug.Log("振った");
+			swing = true;
+			wmAccelOld = accel;
+		}
 		return swing;
+	}
+
+	// モーションプラス初期化処理関数
+	private Wiimote InitMotionPlus(Wiimote mote)
+	{
+		mote.SendDataReportMode(InputDataType.REPORT_BUTTONS_ACCEL_EXT16);
+		mote.RequestIdentifyWiiMotionPlus();
+		mote.ActivateWiiMotionPlus();
+		return mote;
+	}
+
+	// スピーカーを有効化
+	private int SpeakerEnable(bool enabled)
+	{
+		byte[] mask = new byte[] { (byte)(enabled ? 0x04 : 0x00) };
+		return wm.SendWithType(OutputDataType.SPEAKER_ENABLE, mask);
+	}
+
+	// スピーカーをミュート
+	private int SpeakerMute(bool muted)
+	{
+		byte[] mask = new byte[] {(byte)(muted ? 0x04 : 0x00) };
+		return wm.SendWithType(OutputDataType.SPEAKER_MUTE, mask);
+	}
+
+	// スピーカー初期化処理
+	private void SpeakerInit()
+	{
+		SpeakerEnable(true);
+		SpeakerMute(true);
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20009, new byte[] { 0x01 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20001, new byte[] { 0x08 });
+
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20001, new byte[] { 0x00 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20002, new byte[] {  0x28 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20003, new byte[] { 0x46 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20004, new byte[] { 0x11 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20005, new byte[] { 0x28 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20006, new byte[] { 0x00 });
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20007, new byte[] { 0x00 });
+
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20008, new byte[] { 0x01 });
+		SpeakerMute(false);
+
+		OpenWav();
+	}
+
+	private void OpenWav()
+	{
+		FileInfo fi = new FileInfo(Application.dataPath + "/" + "03_よ゛ろ゛し゛く゛お゛ね゛か゛い゛し゛ま゛ぁ゛ー゛す゛.wav");
+
+		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20008, new byte[] { 0x01 });
 	}
 }
