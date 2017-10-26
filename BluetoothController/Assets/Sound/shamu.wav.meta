@@ -1,21 +1,21 @@
 fileFormatVersion: 2
-guid: 3c584a32b47a6f84f9571f1697a80c3c
-timeCreated: 1508832980
+guid: af27dd21680d49c489424a30c7379cca
+timeCreated: 1508988238
 licenseType: Free
 AudioImporter:
   serializedVersion: 6
   defaultSettings:
     loadType: 0
-    sampleRateSetting: 2
-    sampleRateOverride: 8000
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
     compressionFormat: 1
     quality: 1
     conversionMode: 0
   platformSettingOverrides: {}
-  forceToMono: 1
+  forceToMono: 0
   normalize: 1
   preloadAudioData: 1
-  loadInBackground: 1
+  loadInBackground: 0
   ambisonic: 0
   3D: 1
   userData: 

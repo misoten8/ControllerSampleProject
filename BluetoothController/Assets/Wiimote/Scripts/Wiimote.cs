@@ -93,9 +93,9 @@ public class Wiimote
     public ReadOnlyArray<byte> RawExtension { get { return _RawExtension; } }
     private ReadOnlyArray<byte> _RawExtension = null;
 
-    /// The low-level bluetooth HID path of this Wii Remote.  Use this
-    /// when interfacing directly with HIDApi.
-    public string hidapi_path { get { return _hidapi_path; } }
+		/// The low-level bluetooth HID path of this Wii Remote.  Use this
+		/// when interfacing directly with HIDApi.
+		public string hidapi_path { get { return _hidapi_path; } }
     private string _hidapi_path;
 
     public WiimoteType Type { get { return _Type; } }
@@ -106,11 +106,13 @@ public class Wiimote
     private InputDataType last_report_type = InputDataType.REPORT_BUTTONS;
     private bool expecting_status_report = false;
 
-    /// True if a Wii Motion Plus is attached to the Wii Remote, and it
-    /// has NOT BEEN ACTIVATED.  When the WMP is activated this value is
-    /// false.  This is only updated when WMP state is requested from
-    /// Wii Remote registers (see: RequestIdentifyWiiMotionPlus())
-    public bool wmp_attached { get { return _wmp_attached; } }
+		public WiimoteSpeaker Speaker { get { return _Speaker; } }
+		private WiimoteSpeaker _Speaker;
+		/// True if a Wii Motion Plus is attached to the Wii Remote, and it
+		/// has NOT BEEN ACTIVATED.  When the WMP is activated this value is
+		/// false.  This is only updated when WMP state is requested from
+		/// Wii Remote registers (see: RequestIdentifyWiiMotionPlus())
+		public bool wmp_attached { get { return _wmp_attached; } }
     private bool _wmp_attached = false;
 
     /// The current extension connected to the Wii Remote.  This is only updated
@@ -137,8 +139,11 @@ public class Wiimote
         _Status = new StatusData(this);
         _Extension = null;
 
-        //RequestIdentifyWiiMotionPlus(); // why not?
-    }
+		//	ŒË•”’Ç‰Á
+		_Speaker = new WiimoteSpeaker(this);
+
+			//RequestIdentifyWiiMotionPlus(); // why not?
+		}
 
     private static byte[] ID_InactiveMotionPlus  = new byte[] {0x00, 0x00, 0xA6, 0x20, 0x00, 0x05};
 
@@ -177,9 +182,10 @@ public class Wiimote
     private const long ID_Classic                   = 0x0000A4200101;
     private const long ID_ClassicPro                = 0x0100A4200101;
     private const long ID_WiiUPro                   = 0x0000A4200120;
+		
 
 
-    private void RespondIdentifyExtension(byte[] data)
+		private void RespondIdentifyExtension(byte[] data)
     {
         if (data.Length != 6)
             return;

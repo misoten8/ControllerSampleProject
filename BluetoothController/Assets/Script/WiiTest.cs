@@ -19,6 +19,8 @@ public class WiiTest : MonoBehaviour
 	private Vector3 wmAccel = Vector3.zero;
 	private Vector3 wmAccelOld = Vector3.zero;
 
+	public AudioClip sound;
+
 	// 初期化処理
 	void Start()
 	{
@@ -31,7 +33,6 @@ public class WiiTest : MonoBehaviour
 	{
 		// 接続されていなかったら終了
 		if (!WiimoteManager.HasWiimote()) { return; }
-
 		// 1Pを保存
 		wm = WiimoteManager.Wiimotes[0];
 		int ret;
@@ -78,7 +79,6 @@ public class WiiTest : MonoBehaviour
 
 		// モーションプラスがアクティブになっていければ終了
 		if (!wm.wmp_attached) { return; }
-
 	}
 
 	// デバッグ
@@ -95,6 +95,7 @@ public class WiiTest : MonoBehaviour
 		{
 			WiimoteManager.FindWiimotes();
 			//wm = InitMotionPlus(WiimoteManager.Wiimotes[0]);
+			wm = InitWiimote(WiimoteManager.Wiimotes[0]);
 		}
 
 		// 切断ボタン
@@ -231,6 +232,7 @@ public class WiiTest : MonoBehaviour
 		if (ac < 1.44f)
 		{
 			Debug.Log("振った");
+			wm.Speaker.Play(sound);
 			swing = true;
 			wmAccelOld = accel;
 		}
@@ -278,7 +280,6 @@ public class WiiTest : MonoBehaviour
 
 		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20008, new byte[] { 0x01 });
 		SpeakerMute(false);
-
 		OpenWav();
 	}
 
@@ -287,5 +288,11 @@ public class WiiTest : MonoBehaviour
 		FileInfo fi = new FileInfo(Application.dataPath + "/" + "03_よ゛ろ゛し゛く゛お゛ね゛か゛い゛し゛ま゛ぁ゛ー゛す゛.wav");
 
 		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20008, new byte[] { 0x01 });
+	}
+
+	private Wiimote InitWiimote(Wiimote wii)
+	{
+		wii.Speaker.Init();
+		return wii;
 	}
 }
