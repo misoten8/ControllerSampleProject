@@ -1,4 +1,13 @@
-﻿using UnityEngine;
+﻿//=============================================================================
+//	タイトル  : wiiリモコン
+//	ファイル名: WiiTest.cpp
+//	作成者    : AT14A341 戸部俊太
+//	作成日    : 2017/9/1
+//=============================================================================
+//	更新履歴	-2017/9/1
+//				V0.01 InitialVersion
+//=============================================================================
+using UnityEngine;
 using System;
 using UnityEngine.UI;
 using System.Collections;
@@ -8,9 +17,12 @@ using WiimoteApi.Internal;
 using WiimoteApi.Util;
 using System.IO;
 
-
+//=============================================================================
+//	スクリプト
+//=============================================================================
 public class WiiTest : MonoBehaviour
 {
+	// 変数宣言
 	public WiimoteModel wmModel;				// モデル
 	private Wiimote wm;							// wiiリモコンハンドル
 	private Quaternion initialRotation;			// 角度初期値
@@ -33,7 +45,8 @@ public class WiiTest : MonoBehaviour
 	{
 		// 接続されていなかったら終了
 		if (!WiimoteManager.HasWiimote()) { return; }
-		// 1Pを保存
+
+		// 1Pに保存
 		wm = WiimoteManager.Wiimotes[0];
 		int ret;
 		do
@@ -66,7 +79,7 @@ public class WiiTest : MonoBehaviour
 		wmModel.home.enabled = wm.Button.home;
 
 		// 加速度取得
-		Debug.Log(wmAccel =GetAccelVector());
+		Debug.Log(wmAccel =wm.Accel.GetAccelVector());
 
 		// 振っているか判定
 		wmSwing = SwingCheck();
@@ -81,7 +94,12 @@ public class WiiTest : MonoBehaviour
 		if (!wm.wmp_attached) { return; }
 	}
 
-	// デバッグ
+	//=============================================================================
+	//	関数名: void OnGUI()
+	//	引数  : なし
+	//	戻り値: なし
+	//	説明  : DebugGUI
+	//=============================================================================
 	void OnGUI()
 	{
 		// 枠
@@ -173,27 +191,6 @@ public class WiiTest : MonoBehaviour
 				wm.Accel.CalibrateAccel(step);
 		}
 		GUILayout.EndHorizontal();
-
-		// スピーカー
-		if (GUILayout.Button("Speaker" , GUILayout.Width(300 / 4)))
-		{
-			SpeakerInit();
-		}
-	}
-
-	// 加速度の取得
-	private Vector3 GetAccelVector()
-	{
-		float accel_x;
-		float accel_y;
-		float accel_z;
-
-		float[] accel = wm.Accel.GetCalibratedAccelData();
-		accel_x = accel[0];
-		accel_y = -accel[2];
-		accel_z = -accel[1];
-
-		return new Vector3(accel_x, accel_y, accel_z).normalized;
 	}
 
 	[System.Serializable]
@@ -213,14 +210,19 @@ public class WiiTest : MonoBehaviour
 		public Renderer home;
 	}
 
-	// 振動判定関数
+	//=============================================================================
+	//	関数名: public bool SwingCheck()
+	//	引数  : なし
+	//	戻り値: なし
+	//	説明  : Wiiリモコン　振動判定処理
+	//=============================================================================
 	public bool SwingCheck()
 	{
 		float ac;
 		bool swing = false;
 
-		Vector3 accel = GetAccelVector();
-
+		// 加速度の取得
+		Vector3 accel = wm.Accel.GetAccelVector();
 		if (accel == wmAccelOld)
 		{
 			return swing;
@@ -229,70 +231,35 @@ public class WiiTest : MonoBehaviour
 		
 		ac = Math.Abs(accel.x) + Math.Abs(accel.y) + Math.Abs(accel.z);
 		Debug.Log("加速度:" + ac);
+		//　振った判定
 		if (ac < 1.44f)
 		{
 			Debug.Log("振った");
-			wm.Speaker.Play(sound);
+			// ↓使えない
+			//wm.Speaker.Play(sound);
 			swing = true;
 			wmAccelOld = accel;
 		}
 		return swing;
 	}
 
-	// モーションプラス初期化処理関数
-	private Wiimote InitMotionPlus(Wiimote mote)
-	{
-		mote.SendDataReportMode(InputDataType.REPORT_BUTTONS_ACCEL_EXT16);
-		mote.RequestIdentifyWiiMotionPlus();
-		mote.ActivateWiiMotionPlus();
-		return mote;
-	}
-
-	// スピーカーを有効化
-	private int SpeakerEnable(bool enabled)
-	{
-		byte[] mask = new byte[] { (byte)(enabled ? 0x04 : 0x00) };
-		return wm.SendWithType(OutputDataType.SPEAKER_ENABLE, mask);
-	}
-
-	// スピーカーをミュート
-	private int SpeakerMute(bool muted)
-	{
-		byte[] mask = new byte[] {(byte)(muted ? 0x04 : 0x00) };
-		return wm.SendWithType(OutputDataType.SPEAKER_MUTE, mask);
-	}
-
-	// スピーカー初期化処理
-	private void SpeakerInit()
-	{
-		SpeakerEnable(true);
-		SpeakerMute(true);
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20009, new byte[] { 0x01 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20001, new byte[] { 0x08 });
-
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20001, new byte[] { 0x00 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20002, new byte[] {  0x28 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20003, new byte[] { 0x46 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20004, new byte[] { 0x11 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20005, new byte[] { 0x28 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20006, new byte[] { 0x00 });
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20007, new byte[] { 0x00 });
-
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20008, new byte[] { 0x01 });
-		SpeakerMute(false);
-		OpenWav();
-	}
-
-	private void OpenWav()
-	{
-		FileInfo fi = new FileInfo(Application.dataPath + "/" + "03_よ゛ろ゛し゛く゛お゛ね゛か゛い゛し゛ま゛ぁ゛ー゛す゛.wav");
-
-		wm.SendRegisterWriteRequest(RegisterType.CONTROL, 0xa20008, new byte[] { 0x01 });
-	}
-
+	//=============================================================================
+	//	関数名: Wiimote InitWiimote( Wiimote wii )
+	//	引数  : なし
+	//	戻り値: なし
+	//	説明  : Wiiリモコン初期化処理関数
+	//=============================================================================
 	private Wiimote InitWiimote(Wiimote wii)
 	{
 		wii.Speaker.Init();
+
+		// Wiiモーションプラスを有効化
+		wii.SendDataReportMode(InputDataType.REPORT_BUTTONS_ACCEL_EXT16);
+		wii.RequestIdentifyWiiMotionPlus();
+		wii.ActivateWiiMotionPlus();
 		return wii;
 	}
 }
+//=============================================================================
+//	end of file
+//=============================================================================

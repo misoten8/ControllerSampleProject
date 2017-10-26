@@ -128,5 +128,19 @@ namespace WiimoteApi
             ret[2] = (z_raw - o[2]) / (accel_calib[0, 2] - o[2]);
             return ret;
         }
-    }
+
+		public Vector3 GetAccelVector()
+		{
+			float accel_x;
+			float accel_y;
+			float accel_z;
+
+			float[] accel = GetCalibratedAccelData();
+			accel_x = accel[0];
+			accel_y = -accel[2];
+			accel_z = -accel[1];
+
+			return new Vector3(accel_x, accel_y, accel_z).normalized;
+		}
+	}
 }

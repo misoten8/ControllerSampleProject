@@ -324,7 +324,7 @@ MonoBehaviour:
     plus: {fileID: 589205580}
     minus: {fileID: 1241151217}
     home: {fileID: 1492455131}
-  sound: {fileID: 8300000, guid: 7d1ffcc4fe9c2fb4abaabce0c059c7d8, type: 3}
+  sound: {fileID: 8300000, guid: 45a1fee35063f954fa483bbdd72fe483, type: 3}
 --- !u!1 &1309463240
 GameObject:
   m_ObjectHideFlags: 0
